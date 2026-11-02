@@ -177,9 +177,10 @@ export async function userBadges(userId: string): Promise<Badge[]> {
 }
 
 export async function myStats(userId: string): Promise<ReviewerStats | null> {
-  const { data, error } = await supabase.from('reviewer_stats').select('*').eq('user_id', userId).maybeSingle();
+  void userId; // hàm my_stats tự lấy người dùng hiện tại từ phiên đăng nhập
+  const { data, error } = await supabase.rpc('my_stats');
   if (error) fail(error);
-  return (data as ReviewerStats | null) ?? null;
+  return ((data ?? []) as ReviewerStats[])[0] ?? null;
 }
 
 export async function getConfig(): Promise<Record<string, number>> {
