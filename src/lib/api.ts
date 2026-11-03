@@ -19,7 +19,7 @@ export interface Bounds {
   maxLng: number;
 }
 
-export async function placesInBounds(b: Bounds, category: string | null, onlyHot: boolean): Promise<Place[]> {
+export async function placesInBounds(b: Bounds, category: string | null, onlyHot: boolean, limit = 300): Promise<Place[]> {
   const { data, error } = await supabase.rpc('places_in_bounds', {
     p_min_lat: b.minLat,
     p_min_lng: b.minLng,
@@ -27,7 +27,7 @@ export async function placesInBounds(b: Bounds, category: string | null, onlyHot
     p_max_lng: b.maxLng,
     p_category: category,
     p_only_hot: onlyHot,
-    p_limit: 300,
+    p_limit: limit,
   });
   if (error) fail(error);
   return (data ?? []) as Place[];

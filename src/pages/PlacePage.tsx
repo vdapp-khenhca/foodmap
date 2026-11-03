@@ -2,14 +2,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import maplibregl from '../lib/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { ArrowLeft, Bookmark, Flag, Navigation, PenLine, Share2, ThumbsDown, ThumbsUp, Trash2 } from 'lucide-react';
+import { ArrowLeft, Bookmark, Flag, Navigation, PenLine, Share2, ThumbsDown, ThumbsUp, Trash2, Flame, BadgeCheck } from 'lucide-react';
 import { deleteReview, getPlace, getReviews, isSaved, reportReview, setSaved, voteReview } from '../lib/api';
 import { categoryOf } from '../lib/categories';
-import { MAP_STYLE } from '../lib/geo';
+import { MAP_STYLE, distanceM, formatDistance, useUserFix } from '../lib/geo';
 import { useAuth } from '../lib/auth';
 import { useToast } from '../lib/toast';
 import type { Place, Review } from '../lib/types';
-import { FoodieBadge, ScoreBadge, Spinner, Stars, VerifiedBadge, initial, timeAgo } from '../components/ui';
+import { Avatar, ScoreBadge, Spinner, Stars, VerifiedStamp, timeAgo } from '../components/ui';
 
 function applyVote(r: Review, next: boolean | null): Review {
   let acc = r.accurate_count;
@@ -26,6 +26,7 @@ export default function PlacePage() {
   const nav = useNavigate();
   const { user } = useAuth();
   const toast = useToast();
+  const fix = useUserFix();
   const [place, setPlace] = useState<Place | null | undefined>(undefined);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [saved, setSavedState] = useState(false);
@@ -59,10 +60,8 @@ export default function PlacePage() {
     isSaved(user.id, id).then(setSavedState).catch(() => {});
   }, [user, id]);
 
-  // Bản đồ nhỏ hiển thị vị trí thực của quán
   const lat = place?.lat;
   const lng = place?.lng;
-  const cat = place?.category;
   useEffect(() => {
     if (!miniRef.current || lat == null || lng == null) return;
     const map = new maplibregl.Map({
@@ -75,11 +74,10 @@ export default function PlacePage() {
     });
     const el = document.createElement('div');
     el.textContent = '📍';
-    el.style.fontSize = '34px';
-    el.style.lineHeight = '1';
+    el.style.cssText = 'font-size:36px;line-height:1;filter:drop-shadow(0 3px 3px rgba(0,0,0,.35))';
     new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([lng, lat]).addTo(map);
     return () => map.remove();
-  }, [lat, lng, cat]);
+  }, [lat, lng]);
 
   if (place === undefined) return <Spinner label="Đang tải quán…" />;
   if (!place) {
@@ -99,6 +97,7 @@ export default function PlacePage() {
   const c = categoryOf(place.category);
   const photos = reviews.flatMap((r) => r.photo_urls);
   const mine = reviews.find((r) => r.is_mine);
+  const dist = fix ? distanceM(fix.lat, fix.lng, place.lat, place.lng) : null;
 
   async function toggleSave() {
     if (!user) {
@@ -171,26 +170,46 @@ export default function PlacePage() {
 
   return (
     <div className="page">
-      <div className="row" style={{ marginBottom: 12 }}>
-        <button className="icon-btn" onClick={() => (window.history.length > 1 ? nav(-1) : nav('/'))} aria-label="Quay lại">
-          <ArrowLeft size={20} />
-        </button>
-      </div>
+      <header className="shop-hero">
+        <div className="awning" aria-hidden="true" />
+        <div className="shop-photo" style={{ ['--tint' as string]: c.tint }}>
+          {photos[0] ? <img src={photos[0]} alt={`Ảnh món tại ${place.name}`} onClick={() => setLightbox(photos[0])} /> : <span aria-hidden="true">{c.emoji}</span>}
+        </div>
+        <div className="hero-actions">
+          <button className="icon-btn" onClick={() => (window.history.length > 1 ? nav(-1) : nav('/'))} aria-label="Quay lại">
+            <ArrowLeft size={20} />
+          </button>
+          <div className="row">
+            <button className="icon-btn" onClick={toggleSave} aria-label={saved ? 'Bỏ lưu' : 'Lưu quán'} aria-pressed={saved}>
+              <Bookmark size={20} fill={saved ? 'currentColor' : 'none'} color={saved ? '#1f3fd0' : undefined} />
+            </button>
+            <button className="icon-btn" onClick={share} aria-label="Chia sẻ">
+              <Share2 size={19} />
+            </button>
+          </div>
+        </div>
+      </header>
 
-      <div className="hero">
-        {photos[0] ? <img src={photos[0]} alt={`Ảnh món tại ${place.name}`} onClick={() => setLightbox(photos[0])} /> : <div className="hero-empty">{c.emoji}</div>}
-      </div>
-
-      <div className="place-head">
+      <div className="shop-head">
         <div style={{ flex: 1, minWidth: 0 }}>
           <h1>{place.name}</h1>
           <div className="muted" style={{ marginTop: 4 }}>
             {c.emoji} {c.label}
-            {place.address ? ` · ${place.address}` : ''}
+            {place.address ? `, ${place.address}` : ''}
           </div>
-          <div className="row" style={{ marginTop: 8, flexWrap: 'wrap', gap: 6 }}>
-            {place.is_hot && <span className="badge hot">🔥 Đang hot</span>}
-            {place.verified_count > 0 && <span className="badge verified">{place.verified_count} review xác thực</span>}
+          <div className="row" style={{ marginTop: 10, flexWrap: 'wrap', gap: 6 }}>
+            {place.is_hot && (
+              <span className="badge hot">
+                <Flame size={12} /> Đang hot
+              </span>
+            )}
+            {place.verified_count > 0 && (
+              <span className="badge jade">
+                <BadgeCheck size={12} /> {place.verified_count} review xác thực
+              </span>
+            )}
+            {dist != null && <span className="badge plain">Cách bạn {formatDistance(dist)}</span>}
+            {place.is_demo && <span className="badge demo">Dữ liệu demo</span>}
           </div>
         </div>
         <div>
@@ -199,35 +218,28 @@ export default function PlacePage() {
         </div>
       </div>
 
-      {place.suspicious && (
-        <div className="note">Quán đang nhận nhiều review từ tài khoản mới trong thời gian ngắn, hệ thống tạm giảm độ hot để tránh sai lệch.</div>
-      )}
+      {place.suspicious && <div className="note">Quán đang nhận nhiều review từ tài khoản mới trong thời gian ngắn, hệ thống tạm giảm độ hot để tránh sai lệch.</div>}
 
       <div className="action-row">
-        <a className="btn ghost" target="_blank" rel="noreferrer" href={`https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}`}>
-          <Navigation size={20} /> Chỉ đường
-        </a>
-        <button className="btn ghost" onClick={toggleSave}>
-          <Bookmark size={20} fill={saved ? 'currentColor' : 'none'} /> {saved ? 'Đã lưu' : 'Muốn thử'}
-        </button>
-        <button className="btn ghost" onClick={share}>
-          <Share2 size={20} /> Chia sẻ
-        </button>
+        <Link to={`/place/${id}/directions`} className="btn">
+          <Navigation size={18} /> Chỉ đường
+        </Link>
+        {mine ? (
+          <span className="btn ghost" style={{ cursor: 'default' }}>
+            <BadgeCheck size={18} color="#13a075" /> Bạn đã review
+          </span>
+        ) : (
+          <Link to={`/place/${id}/review`} className="btn sign">
+            <PenLine size={18} /> Viết review
+          </Link>
+        )}
       </div>
 
       <div ref={miniRef} className="mini-map" aria-label="Vị trí quán trên bản đồ" />
 
-      {mine ? (
-        <div className="ok-note">Bạn đã review quán này. Cảm ơn bạn đã đóng góp!</div>
-      ) : (
-        <Link to={`/place/${id}/review`} className="btn block">
-          <PenLine size={18} /> Viết review
-        </Link>
-      )}
-
       {photos.length > 0 && (
         <>
-          <div className="section-title">Ảnh từ thực khách</div>
+          <h2 className="section-title">Ảnh từ thực khách</h2>
           <div className="photo-strip">
             {photos.map((u) => (
               <img key={u} src={u} alt="Ảnh món ăn" loading="lazy" onClick={() => setLightbox(u)} />
@@ -236,31 +248,31 @@ export default function PlacePage() {
         </>
       )}
 
-      <div className="section-title">Review ({reviews.length})</div>
-      <p className="muted" style={{ marginTop: -4, marginBottom: 12, fontSize: 13 }}>
-        Review của người Sành ăn và review được nhiều người đã tới quán xác nhận sẽ lên đầu.
+      <h2 className="section-title">Review ({reviews.length})</h2>
+      <p className="muted" style={{ marginTop: -4, marginBottom: 12, fontSize: 13.5 }}>
+        Review của người Sành ăn và review được nhiều người đã tới quán xác nhận được xếp lên đầu.
       </p>
       {reviews.length === 0 && (
         <div className="empty">
           <div className="big">✍️</div>
-          Chưa có review nào. Hãy là người đầu tiên!
+          Chưa có review nào. Hãy là người đầu tiên kể về quán này.
         </div>
       )}
       {reviews.map((r) => (
-        <article key={r.id} className="card review">
+        <article key={r.id} className={`card review${r.is_foodie ? ' foodie' : ''}`}>
           <div className="review-head">
-            <div className="avatar">{initial(r.display_name)}</div>
+            <Avatar name={r.display_name} url={r.avatar_url} size={44} foodie={r.is_foodie} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="review-name">{r.display_name}</div>
               <div className="review-badges">
-                {r.is_foodie && <FoodieBadge />}
-                {r.verified && <VerifiedBadge />}
-                {r.sponsored && <span className="badge sponsored">Được mời / tài trợ</span>}
+                {r.is_foodie && <span className="badge sign">Sành ăn</span>}
+                {r.verified && <VerifiedStamp />}
+                {r.sponsored && <span className="badge plain">Được mời hoặc tài trợ</span>}
               </div>
             </div>
             <div style={{ textAlign: 'right' }}>
               <Stars value={Number(r.rating_overall)} size={14} />
-              <div className="muted" style={{ fontSize: 12 }}>
+              <div className="muted" style={{ fontSize: 12.5 }}>
                 {timeAgo(r.created_at)}
               </div>
             </div>
@@ -295,7 +307,7 @@ export default function PlacePage() {
               ))}
             </div>
           )}
-          {r.sponsored && <p className="muted" style={{ fontSize: 12.5, marginTop: 8 }}>Review này không được tính vào điểm của quán.</p>}
+          {r.sponsored && <p className="muted" style={{ fontSize: 13, marginTop: 8 }}>Review này không được tính vào điểm của quán.</p>}
 
           <div className="vote-row">
             {!r.is_mine && (
@@ -333,8 +345,10 @@ export default function PlacePage() {
       {reporting && (
         <div className="modal-back" onClick={() => setReporting(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginBottom: 8 }}>Báo cáo review sai sự thật</h2>
-            <p className="muted" style={{ marginBottom: 12, fontSize: 13.5 }}>
+            <h2 className="display" style={{ marginBottom: 8, fontSize: 22 }}>
+              Báo cáo review sai sự thật
+            </h2>
+            <p className="muted" style={{ marginBottom: 12, fontSize: 14 }}>
               Ví dụ: quảng cáo trá hình, chưa từng tới quán, nội dung không đúng thực tế. Khi đủ người đã tới quán báo cáo, review sẽ được ẩn để xem xét.
             </p>
             <textarea className="textarea" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Lý do (không bắt buộc)" maxLength={500} />

@@ -2,18 +2,19 @@ export interface Category {
   key: string;
   label: string;
   emoji: string;
+  tint: string;
 }
 
 export const CATEGORIES: Category[] = [
-  { key: 'pho', label: 'Phở', emoji: '🍜' },
-  { key: 'bun_mi', label: 'Bún / Mì', emoji: '🍲' },
-  { key: 'com', label: 'Cơm', emoji: '🍚' },
-  { key: 'lau_nuong', label: 'Lẩu / Nướng', emoji: '🔥' },
-  { key: 'an_vat', label: 'Ăn vặt', emoji: '🥟' },
-  { key: 'ca_phe', label: 'Cà phê', emoji: '☕' },
-  { key: 'tra_sua', label: 'Trà sữa', emoji: '🧋' },
-  { key: 'quan_nhau', label: 'Quán nhậu', emoji: '🍻' },
-  { key: 'khac', label: 'Khác', emoji: '🍽️' },
+  { key: 'pho', label: 'Phở', emoji: '🍜', tint: '#FFE9D2' },
+  { key: 'bun_mi', label: 'Bún / Mì', emoji: '🍲', tint: '#E3ECFF' },
+  { key: 'com', label: 'Cơm', emoji: '🍚', tint: '#FFF1BF' },
+  { key: 'lau_nuong', label: 'Lẩu / Nướng', emoji: '🔥', tint: '#FFDDD6' },
+  { key: 'an_vat', label: 'Ăn vặt', emoji: '🥟', tint: '#EFE3FF' },
+  { key: 'ca_phe', label: 'Cà phê', emoji: '☕', tint: '#EADFD3' },
+  { key: 'tra_sua', label: 'Trà sữa', emoji: '🧋', tint: '#FFE1EE' },
+  { key: 'quan_nhau', label: 'Quán nhậu', emoji: '🍻', tint: '#FFEDB8' },
+  { key: 'khac', label: 'Khác', emoji: '🍽️', tint: '#E6EAF4' },
 ];
 
 export function categoryOf(key: string): Category {

@@ -5,7 +5,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { ArrowLeft, LocateFixed } from 'lucide-react';
 import { createPlace, friendlyError, placesInBounds } from '../lib/api';
 import { CATEGORIES } from '../lib/categories';
-import { DEFAULT_VIEW, MAP_STYLE, getPosition, loadView } from '../lib/geo';
+import { DEFAULT_VIEW, MAP_STYLE, getBestPosition, loadView, setUserFix } from '../lib/geo';
 import { reverseGeocode } from '../lib/nominatim';
 import type { Place } from '../lib/types';
 
@@ -46,8 +46,11 @@ export default function AddPlacePage() {
     };
     map.on('moveend', settle);
     map.on('load', settle);
-    getPosition(8000, 60000)
-      .then((f) => map.jumpTo({ center: [f.lng, f.lat], zoom: 17 }))
+    getBestPosition({ maxWaitMs: 8000, goodEnough: 40 })
+      .then((f) => {
+        setUserFix(f);
+        map.jumpTo({ center: [f.lng, f.lat], zoom: f.accuracy > 1500 ? 15 : 17 });
+      })
       .catch(() => {})
       .finally(() => setLocating(false));
     return () => {
@@ -92,8 +95,9 @@ export default function AddPlacePage() {
   async function myLocation() {
     setLocating(true);
     try {
-      const f = await getPosition(10000);
-      mapRef.current?.flyTo({ center: [f.lng, f.lat], zoom: 17 });
+      const f = await getBestPosition({ maxWaitMs: 9000, goodEnough: 40 });
+      setUserFix(f);
+      mapRef.current?.flyTo({ center: [f.lng, f.lat], zoom: f.accuracy > 1500 ? 15 : 17 });
     } catch (e) {
       setError((e as Error).message);
     } finally {

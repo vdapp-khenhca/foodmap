@@ -4,8 +4,8 @@
   "description": "Bản đồ ẩm thực do cộng đồng xây dựng",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FFF9F2",
-  "theme_color": "#E4452B",
+  "background_color": "#F4F6FB",
+  "theme_color": "#1F3FD0",
   "lang": "vi",
   "icons": [
     { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },

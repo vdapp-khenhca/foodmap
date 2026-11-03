@@ -14,6 +14,7 @@ export interface Place {
   hot_score: number;
   suspicious: boolean;
   is_hot: boolean;
+  is_demo?: boolean;
 }
 
 export interface Review {

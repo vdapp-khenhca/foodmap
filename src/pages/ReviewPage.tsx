@@ -4,7 +4,7 @@ import { ArrowLeft, Camera, CheckCircle2, Image as ImageIcon, LocateFixed, MapPi
 import { createReview, friendlyError, getPlace, uploadPhoto } from '../lib/api';
 import { REVIEW_TAGS, categoryOf } from '../lib/categories';
 import { compressImage } from '../lib/image';
-import { distanceM, formatDistance, getPosition, type Fix } from '../lib/geo';
+import { distanceM, formatDistance, getBestPosition, setUserFix, type Fix } from '../lib/geo';
 import { useAuth } from '../lib/auth';
 import { useToast } from '../lib/toast';
 import type { Place } from '../lib/types';
@@ -49,7 +49,9 @@ export default function ReviewPage() {
   const locate = useCallback(async () => {
     setLocState('loading');
     try {
-      setFix(await getPosition(15000));
+      const f = await getBestPosition({ maxWaitMs: 12000, goodEnough: 40 });
+      setUserFix(f);
+      setFix(f);
       setLocState('ready');
     } catch (e) {
       setLocError((e as Error).message);
@@ -108,7 +110,7 @@ export default function ReviewPage() {
       // Lấy lại vị trí mới nhất ngay lúc gửi; máy chủ sẽ tự kiểm tra khoảng cách
       let f = fix;
       try {
-        f = await getPosition(8000, 30000);
+        f = await getBestPosition({ maxWaitMs: 6000, goodEnough: 60 });
         setFix(f);
       } catch {
         /* dùng vị trí đã có (nếu có) */
@@ -209,7 +211,7 @@ export default function ReviewPage() {
           </div>
         </div>
 
-        <div className="section-title">Thẻ nhanh</div>
+        <h2 className="section-title">Thẻ nhanh</h2>
         <div className="tag-pick">
           {REVIEW_TAGS.map((t) => (
             <button key={t} type="button" className={`chip${tags.includes(t) ? ' on-leaf' : ''}`} onClick={() => toggleTag(t)}>
@@ -218,7 +220,7 @@ export default function ReviewPage() {
           ))}
         </div>
 
-        <div className="section-title">Cảm nhận của bạn</div>
+        <h2 className="section-title">Cảm nhận của bạn</h2>
         <textarea
           className="textarea"
           value={body}
@@ -227,7 +229,7 @@ export default function ReviewPage() {
           placeholder="Món nào ngon, món nào nên tránh, giá khoảng bao nhiêu… (không bắt buộc)"
         />
 
-        <div className="section-title">Ảnh thật ({photos.length}/{MAX_PHOTOS})</div>
+        <h2 className="section-title">Ảnh thật ({photos.length}/{MAX_PHOTOS})</h2>
         <div className="photo-grid">
           {photos.map((p, i) => (
             <div className="photo-tile" key={p.preview}>
@@ -262,7 +264,7 @@ export default function ReviewPage() {
           </span>
         </label>
 
-        <button className="btn block" style={{ marginTop: 20 }} onClick={submit} disabled={busy}>
+        <button className="btn sign block" style={{ marginTop: 22 }} onClick={submit} disabled={busy}>
           {busy ? 'Đang đăng…' : 'Đăng review'}
         </button>
       </div>

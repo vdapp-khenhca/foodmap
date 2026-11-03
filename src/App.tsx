@@ -2,7 +2,8 @@ import { Route, Routes, useLocation } from 'react-router-dom';
 import { AuthProvider } from './lib/auth';
 import { ToastProvider } from './lib/toast';
 import { isConfigured } from './lib/supabase';
-import TabBar from './components/TabBar';
+import AppNav from './components/AppNav';
+import DirectionsPage from './pages/DirectionsPage';
 import RequireAuth from './components/RequireAuth';
 import MapPage from './pages/MapPage';
 import PlacePage from './pages/PlacePage';
@@ -26,9 +27,9 @@ export default function App() {
 
 function Shell() {
   const { pathname } = useLocation();
-  const hideTabs = pathname === '/login' || pathname === '/add' || pathname.endsWith('/review');
+  const hideTabs = pathname === '/login' || pathname === '/add' || pathname.endsWith('/review') || pathname.endsWith('/directions');
   return (
-    <div className="shell">
+    <div className={`shell${hideTabs ? ' no-nav' : ''}`}>
       <main className="shell-main">
         <Routes>
           <Route path="/" element={<MapPage />} />
@@ -41,6 +42,7 @@ function Shell() {
               </RequireAuth>
             }
           />
+          <Route path="/place/:id/directions" element={<DirectionsPage />} />
           <Route
             path="/add"
             element={
@@ -55,7 +57,7 @@ function Shell() {
           <Route path="*" element={<MapPage />} />
         </Routes>
       </main>
-      {!hideTabs && <TabBar />}
+      {!hideTabs && <AppNav />}
     </div>
   );
 }

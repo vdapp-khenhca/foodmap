@@ -2,7 +2,7 @@ export default function SetupPage() {
   return (
     <div className="auth-wrap">
       <div className="card auth-card stack">
-        <img src="/icons/icon.svg" alt="" className="logo" />
+        <img src="/icons/icon.svg" alt="" className="logo-mark" />
         <h1 className="page-title">Cần kết nối Supabase</h1>
         <p className="muted">
           Ứng dụng chưa có thông tin kết nối cơ sở dữ liệu. Thêm hai biến môi trường sau (trên Vercel: Settings → Environment Variables) rồi deploy lại:

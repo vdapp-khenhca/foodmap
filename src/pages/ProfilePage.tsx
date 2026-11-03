@@ -5,7 +5,7 @@ import { getConfig, listSaved, myStats, updateDisplayName, userBadges } from '..
 import { useAuth } from '../lib/auth';
 import { useToast } from '../lib/toast';
 import { LEVEL_LABEL, type Badge, type Place, type ReviewerStats } from '../lib/types';
-import { PlaceCard, Spinner, initial } from '../components/ui';
+import { Avatar, BadgeEmblem, PlaceCard, Spinner } from '../components/ui';
 
 export default function ProfilePage() {
   const { user, loading, signOut } = useAuth();
@@ -43,8 +43,8 @@ export default function ProfilePage() {
     return (
       <div className="page">
         <div className="card" style={{ padding: 24, marginTop: 24, textAlign: 'center' }}>
-          <img src="/icons/icon.svg" alt="" className="logo" />
-          <h1 className="page-title">Chào bạn 👋</h1>
+          <img src="/icons/icon.svg" alt="" className="logo-mark" style={{ margin: '0 auto 12px' }} />
+          <h1 className="page-title">Chào bạn</h1>
           <p className="page-sub">Đăng nhập để review, lưu quán muốn thử và nhận danh hiệu Sành ăn.</p>
           <Link to="/login" state={{ from: '/me' }} className="btn block">
             Đăng nhập / Đăng ký
@@ -78,10 +78,8 @@ export default function ProfilePage() {
 
   return (
     <div className="page">
-      <div className="row" style={{ marginBottom: 16 }}>
-        <div className="avatar" style={{ width: 56, height: 56, fontSize: 24 }}>
-          {initial(displayName)}
-        </div>
+      <div className="profile-hero">
+        <Avatar name={displayName} size={64} foodie={badges.length > 0} tier={badges[0]?.level} />
         <div style={{ flex: 1, minWidth: 0 }}>
           {editing ? (
             <div className="row">
@@ -123,17 +121,17 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="section-title">
-        <Trophy size={18} /> Danh hiệu
-      </div>
+      <h2 className="section-title">
+        <Trophy size={20} /> Danh hiệu
+      </h2>
       {badges.length > 0 ? (
         badges.map((b) => (
           <div className="badge-card" key={b.level + b.area}>
-            <span style={{ fontSize: 26 }}>🏅</span>
+            <BadgeEmblem tier={b.level} size={48} />
             <div>
               <b>Sành ăn {LEVEL_LABEL[b.level]}</b>
-              <div className="muted" style={{ fontSize: 13 }}>
-                {b.area} · hạng {b.rank}
+              <div className="muted" style={{ fontSize: 13.5 }}>
+                {b.area}, hạng {b.rank}
               </div>
             </div>
           </div>
@@ -146,7 +144,7 @@ export default function ProfilePage() {
         </p>
       )}
 
-      <div className="section-title">Muốn thử ({saved.length})</div>
+      <h2 className="section-title">Muốn thử ({saved.length})</h2>
       {saved.length === 0 ? (
         <p className="muted">Bấm “Muốn thử” ở trang quán để lưu lại.</p>
       ) : (
